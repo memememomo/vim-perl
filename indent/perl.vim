@@ -40,7 +40,7 @@ if exists("*GetPerlIndent")
     finish
 endif
 
-" -1 is infinite indent level
+" if values is -1, it is infinite indent level
 if ! exists("g:perl_braceclass_max_indent_level")
     let g:perl_braceclass_max_indent_level = -1
 endif
@@ -162,6 +162,9 @@ function GetPerlIndent()
             let ind = ind + &sw
                         \ * min([abs(indent_level), g:perl_braceclass_max_indent_level])
                         \ * ( indent_level < 0 ? -1 : 1 )
+            if ind == 0
+                return -1
+            endif
         endif
 
         let bracepos = matchend(cline, '^\s*[])}]')
