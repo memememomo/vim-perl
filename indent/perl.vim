@@ -159,10 +159,11 @@ function GetPerlIndent()
         if g:perl_braceclass_max_indent_level == -1
             let ind = ind + &sw * indent_level
         elseif g:perl_braceclass_max_indent_level > 0
-            let ind = ind + &sw
+            let add_indent = &sw
                         \ * min([abs(indent_level), g:perl_braceclass_max_indent_level])
                         \ * ( indent_level < 0 ? -1 : 1 )
-            if ind == 0
+            let ind = ind + add_indent
+            if add_indent < 0 && ind == 0
                 return -1
             endif
         endif
