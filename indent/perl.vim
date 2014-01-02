@@ -40,6 +40,11 @@ if exists("*GetPerlIndent")
     finish
 endif
 
+" if values is -1, it is infinite indent level
+if ! exists("g:perl_braceclass_max_indent_level")
+    let g:perl_braceclass_max_indent_level = -1
+endif
+
 let s:cpo_save = &cpo
 set cpo-=C
 
@@ -131,6 +136,7 @@ function GetPerlIndent()
         " bracket as the first character in the class.
         let braceclass = '[][(){}]'
         let bracepos = match(line, braceclass, matchend(line, '^\s*[])}]'))
+        let indent_level = 0
         while bracepos != -1
             let synid = synIDattr(synID(lnum, bracepos + 1, 0), "name")
             " If the brace is highlighted in one of those groups, indent it.
@@ -142,13 +148,26 @@ function GetPerlIndent()
                         \ || synid =~ '^perl\(Sub\|Block\|Package\)Fold'
                 let brace = strpart(line, bracepos, 1)
                 if brace == '(' || brace == '{' || brace == '['
-                    let ind = ind + &sw
+                    let indent_level += 1
                 else
-                    let ind = ind - &sw
+                    let indent_level -= 1
                 endif
             endif
             let bracepos = match(line, braceclass, bracepos + 1)
         endwhile
+
+        if g:perl_braceclass_max_indent_level == -1
+            let ind = ind + &sw * indent_level
+        elseif g:perl_braceclass_max_indent_level > 0
+            let add_indent = &sw
+                        \ * min([abs(indent_level), g:perl_braceclass_max_indent_level])
+                        \ * ( indent_level < 0 ? -1 : 1 )
+            let ind = ind + add_indent
+            if add_indent < 0 && ind == 0
+                return -1
+            endif
+        endif
+
         let bracepos = matchend(cline, '^\s*[])}]')
         if bracepos != -1
             let synid = synIDattr(synID(v:lnum, bracepos, 0), "name")
